@@ -23,8 +23,8 @@
     <main class="main-content">
       <WordBookView v-if="currentTab === 'wordbook'" />
       <AddWordsView v-if="currentTab === 'add'" />
-      <DictationView v-if="currentTab === 'dictation'" />
-      <RecordsView v-if="currentTab === 'records'" />
+      <DictationView v-if="currentTab === 'dictation'" :retry-record="retryRecord" />
+      <RecordsView v-if="currentTab === 'records'" @retry-dictation="handleRetryDictation" />
     </main>
 
     <!-- 底部信息 -->
@@ -42,9 +42,15 @@ import DictationView from './components/DictationView.vue'
 import RecordsView from './components/RecordsView.vue'
 
 const currentTab = ref('wordbook')
+const retryRecord = ref(null)
 
 const switchTab = (tab) => {
   currentTab.value = tab
+}
+
+const handleRetryDictation = (record) => {
+  retryRecord.value = record
+  switchTab('dictation')
 }
 </script>
 

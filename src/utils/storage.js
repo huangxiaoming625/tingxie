@@ -1,3 +1,30 @@
+// 数据验证工具函数
+function validateUnit(unit) {
+  return unit && typeof unit.name === 'string' && unit.name.trim() !== '' &&
+    typeof unit.grade === 'number' && unit.grade >= 1 && unit.grade <= 6 &&
+    (unit.semester === 1 || unit.semester === 2) &&
+    typeof unit.order === 'number' && unit.order > 0
+}
+
+function validateLesson(lesson) {
+  return lesson && typeof lesson.unitId === 'string' && lesson.unitId.trim() !== '' &&
+    typeof lesson.name === 'string' && lesson.name.trim() !== '' &&
+    typeof lesson.order === 'number' && lesson.order > 0
+}
+
+function validateWord(word) {
+  return word && typeof word.lessonId === 'string' && word.lessonId.trim() !== '' &&
+    typeof word.content === 'string' && word.content.trim() !== '' &&
+    (word.difficulty >= 1 && word.difficulty <= 5)
+}
+
+function validateRecord(record) {
+  return record && (typeof record.lessonId === 'string' || Array.isArray(record.lessonId)) &&
+    Array.isArray(record.wordIds) && record.wordIds.length > 0 &&
+    record.settings && typeof record.settings.wordCount === 'number' &&
+    typeof record.settings.baseInterval === 'number'
+}
+
 // 本地存储工具类 - 使用 localStorage 简化实现
 
 const DB_KEYS = {
@@ -18,15 +45,28 @@ function generateId() {
  * 从localStorage获取数据
  */
 function getData(key) {
-  const data = localStorage.getItem(key)
-  return data ? JSON.parse(data) : []
+  try {
+    const data = localStorage.getItem(key)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error('获取数据失败:', key, error)
+    alert('获取数据失败，请检查浏览器存储权限')
+    return []
+  }
 }
 
 /**
  * 保存数据到localStorage
  */
 function saveData(key, data) {
-  localStorage.setItem(key, JSON.stringify(data))
+  try {
+    localStorage.setItem(key, JSON.stringify(data))
+    return true
+  } catch (error) {
+    console.error('保存数据失败:', key, error)
+    alert('存储失败，请检查浏览器存储权限')
+    return false
+  }
 }
 
 // 单元管理
@@ -36,6 +76,12 @@ export const unitStorage = {
   },
 
   add(unit) {
+    if (!validateUnit(unit)) {
+      console.error('单元数据验证失败:', unit)
+      alert('单元数据格式不正确')
+      return null
+    }
+
     const units = this.getAll()
     const newUnit = {
       ...unit,
@@ -44,8 +90,10 @@ export const unitStorage = {
       updatedAt: new Date().toISOString()
     }
     units.push(newUnit)
-    saveData(DB_KEYS.UNITS, units)
-    return newUnit
+    if (saveData(DB_KEYS.UNITS, units)) {
+      return newUnit
+    }
+    return null
   },
 
   update(id, updates) {
@@ -57,15 +105,16 @@ export const unitStorage = {
         ...updates,
         updatedAt: new Date().toISOString()
       }
-      saveData(DB_KEYS.UNITS, units)
-      return units[index]
+      if (saveData(DB_KEYS.UNITS, units)) {
+        return units[index]
+      }
     }
     return null
   },
 
   delete(id) {
     const units = this.getAll().filter(u => u.id !== id)
-    saveData(DB_KEYS.UNITS, units)
+    return saveData(DB_KEYS.UNITS, units)
   },
 
   getByGradeAndSemester(grade, semester) {
@@ -84,6 +133,12 @@ export const lessonStorage = {
   },
 
   add(lesson) {
+    if (!validateLesson(lesson)) {
+      console.error('课程数据验证失败:', lesson)
+      alert('课程数据格式不正确')
+      return null
+    }
+
     const lessons = this.getAll()
     const newLesson = {
       ...lesson,
@@ -92,8 +147,10 @@ export const lessonStorage = {
       updatedAt: new Date().toISOString()
     }
     lessons.push(newLesson)
-    saveData(DB_KEYS.LESSONS, lessons)
-    return newLesson
+    if (saveData(DB_KEYS.LESSONS, lessons)) {
+      return newLesson
+    }
+    return null
   },
 
   update(id, updates) {
@@ -105,15 +162,16 @@ export const lessonStorage = {
         ...updates,
         updatedAt: new Date().toISOString()
       }
-      saveData(DB_KEYS.LESSONS, lessons)
-      return lessons[index]
+      if (saveData(DB_KEYS.LESSONS, lessons)) {
+        return lessons[index]
+      }
     }
     return null
   },
 
   delete(id) {
     const lessons = this.getAll().filter(l => l.id !== id)
-    saveData(DB_KEYS.LESSONS, lessons)
+    return saveData(DB_KEYS.LESSONS, lessons)
   }
 }
 
@@ -128,6 +186,12 @@ export const wordStorage = {
   },
 
   add(word) {
+    if (!validateWord(word)) {
+      console.error('词语数据验证失败:', word)
+      alert('词语数据格式不正确')
+      return null
+    }
+
     const words = this.getAll()
     const newWord = {
       ...word,
@@ -136,21 +200,41 @@ export const wordStorage = {
       updatedAt: new Date().toISOString()
     }
     words.push(newWord)
-    saveData(DB_KEYS.WORDS, words)
-    return newWord
+    if (saveData(DB_KEYS.WORDS, words)) {
+      return newWord
+    }
+    return null
   },
 
   addBatch(wordList) {
+    const validWords = wordList.filter(word => {
+      if (!validateWord(word)) {
+        console.error('词语数据验证失败:', word)
+        return false
+      }
+      return true
+    })
+
+    if (validWords.length === 0) {
+      alert('没有有效的词语数据')
+      return []
+    }
+
     const words = this.getAll()
-    const newWords = wordList.map(word => ({
+    const newWords = validWords.map(word => ({
       ...word,
       id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }))
     words.push(...newWords)
-    saveData(DB_KEYS.WORDS, words)
-    return newWords
+    if (saveData(DB_KEYS.WORDS, words)) {
+      if (validWords.length < wordList.length) {
+        alert(`部分词语验证失败，已添加 ${validWords.length} 个词语`)
+      }
+      return newWords
+    }
+    return []
   },
 
   update(id, updates) {
@@ -162,20 +246,21 @@ export const wordStorage = {
         ...updates,
         updatedAt: new Date().toISOString()
       }
-      saveData(DB_KEYS.WORDS, words)
-      return words[index]
+      if (saveData(DB_KEYS.WORDS, words)) {
+        return words[index]
+      }
     }
     return null
   },
 
   delete(id) {
     const words = this.getAll().filter(w => w.id !== id)
-    saveData(DB_KEYS.WORDS, words)
+    return saveData(DB_KEYS.WORDS, words)
   },
 
   deleteByLessonId(lessonId) {
     const words = this.getAll().filter(w => w.lessonId !== lessonId)
-    saveData(DB_KEYS.WORDS, words)
+    return saveData(DB_KEYS.WORDS, words)
   }
 }
 
@@ -186,6 +271,12 @@ export const recordStorage = {
   },
 
   add(record) {
+    if (!validateRecord(record)) {
+      console.error('听写记录数据验证失败:', record)
+      alert('听写记录数据格式不正确')
+      return null
+    }
+
     const records = this.getAll()
     const newRecord = {
       ...record,
@@ -193,8 +284,10 @@ export const recordStorage = {
       createdAt: new Date().toISOString()
     }
     records.push(newRecord)
-    saveData(DB_KEYS.RECORDS, records)
-    return newRecord
+    if (saveData(DB_KEYS.RECORDS, records)) {
+      return newRecord
+    }
+    return null
   },
 
   update(id, updates) {
@@ -205,8 +298,9 @@ export const recordStorage = {
         ...records[index],
         ...updates
       }
-      saveData(DB_KEYS.RECORDS, records)
-      return records[index]
+      if (saveData(DB_KEYS.RECORDS, records)) {
+        return records[index]
+      }
     }
     return null
   }

@@ -157,9 +157,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { tts } from '../utils/tts'
 import { unitStorage, lessonStorage, wordStorage, recordStorage } from '../utils/storage'
+
+const props = defineProps({
+  retryRecord: {
+    type: Object,
+    default: null
+  }
+})
 
 // 设置阶段
 const selectedLessons = ref([])
@@ -224,6 +231,46 @@ const adjustCount = (delta) => {
 }
 
 const startDictation = async () => {
+  // 如果是重试模式
+  if (props.retryRecord) {
+    const record = props.retryRecord
+    // 根据 wordIds 直接获取词语
+    const words = []
+    const allWords = wordStorage.getAll()
+    record.wordIds.forEach(wordId => {
+      const word = allWords.find(w => w.id === wordId)
+      if (word) {
+        words.push(word)
+      }
+    })
+
+    if (words.length === 0) {
+      alert('无法找到要听写的词语')
+      return
+    }
+
+    wordsToDictate.value = words
+    currentIndex.value = 0
+    isDictating.value = true
+    isPaused.value = false
+    dictationComplete.value = false
+
+    // 保存新的听写记录
+    recordStorage.add({
+      lessonId: record.lessonId,
+      wordIds: words.map(w => w.id),
+      settings: {
+        wordCount: words.length,
+        baseInterval: record.settings.baseInterval
+      }
+    })
+
+    // 开始听写第一个词语
+    await speakCurrentWord()
+    return
+  }
+
+  // 正常模式
   if (selectedLessons.value.length === 0) return
 
   // 收集所有选择的词语
@@ -360,6 +407,16 @@ const shuffleArray = (array) => {
   }
   return shuffled
 }
+
+onMounted(() => {
+  if (props.retryRecord) {
+    const record = props.retryRecord
+    const lessonIds = record.lessonId.split(',')
+    selectedLessons.value = lessonIds
+    wordCount.value = record.settings.wordCount
+    baseInterval.value = record.settings.baseInterval
+  }
+})
 
 onUnmounted(() => {
   if (countdownTimer) {

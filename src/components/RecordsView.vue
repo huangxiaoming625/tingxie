@@ -53,6 +53,8 @@
 import { ref, computed } from 'vue'
 import { recordStorage, wordStorage, lessonStorage } from '../utils/storage'
 
+const emit = defineEmits(['retry-dictation'])
+
 const records = ref(recordStorage.getAll())
 
 const sortedRecords = computed(() => {
@@ -113,8 +115,8 @@ const clearAllRecords = () => {
 }
 
 const retryDictation = (record) => {
-  alert('跳转到听写页面，使用相同设置...')
-  // 这里可以通过 emit 或路由切换到听写页面
+  // 发送事件给父组件，请求跳转到听写页面
+  emit('retry-dictation', record)
 }
 </script>
 
