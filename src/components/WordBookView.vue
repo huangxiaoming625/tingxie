@@ -19,6 +19,13 @@
           </select>
         </label>
         <button @click="showAddUnitDialog = true" class="btn-small">+ 添加单元</button>
+        <div class="import-export-buttons">
+          <button @click="exportData" class="btn-small btn-export">📤 导出数据</button>
+          <label class="btn-small btn-import">
+            📥 导入数据
+            <input type="file" accept=".json" @change="importData" hidden />
+          </label>
+        </div>
       </div>
 
       <!-- 单元和课程列表 -->
@@ -235,6 +242,72 @@ const deleteWord = (wordId) => {
   }
 }
 
+// 导出数据
+const exportData = () => {
+  const data = {
+    units: unitStorage.getAll(),
+    lessons: lessonStorage.getAll(),
+    words: wordStorage.getAll(),
+    records: recordStorage.getAll(),
+    exportDate: new Date().toISOString(),
+    version: '1.0'
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `小学语文听写_${new Date().toLocaleDateString()}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// 导入数据
+const importData = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  if (!file.name.endsWith('.json')) {
+    alert('请选择正确的 JSON 文件')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result)
+
+      // 检查数据格式
+      if (!data.units || !data.lessons || !data.words) {
+        alert('文件格式不正确')
+        return
+      }
+
+      if (!confirm('确定要导入数据吗？这将覆盖现有数据。')) {
+        return
+      }
+
+      // 导入数据
+      localStorage.setItem('tingxie_units', JSON.stringify(data.units))
+      localStorage.setItem('tingxie_lessons', JSON.stringify(data.lessons))
+      localStorage.setItem('tingxie_words', JSON.stringify(data.words))
+      if (data.records) {
+        localStorage.setItem('tingxie_records', JSON.stringify(data.records))
+      }
+
+      alert('导入成功！')
+      loadUnits()
+    } catch (error) {
+      console.error('导入失败:', error)
+      alert('文件解析失败')
+    }
+  }
+  reader.readAsText(file)
+
+  // 重置 file input
+  event.target.value = ''
+}
+
 onMounted(() => {
   loadUnits()
 })
@@ -305,6 +378,40 @@ onMounted(() => {
 .btn-mini {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
+}
+
+.import-export-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.btn-export {
+  background: #4ecdc4;
+}
+
+.btn-export:hover {
+  background: #3dbdb5;
+}
+
+.btn-import {
+  background: #45b7d1;
+  cursor: pointer;
+  position: relative;
+}
+
+.btn-import:hover {
+  background: #3aa6c0;
+}
+
+.btn-import input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .units-list {
