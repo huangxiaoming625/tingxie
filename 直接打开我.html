@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速访问 - 小学语文听写助手</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #f5576c;
+            margin-bottom: 1.5rem;
+        }
+        .link-list {
+            list-style: none;
+            padding: 0;
+        }
+        .link-list li {
+            margin: 1rem 0;
+        }
+        .link-list a {
+            display: block;
+            padding: 1rem 2rem;
+            background: #f5576c;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        .link-list a:hover {
+            background: #e4465b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .link-list a.secondary {
+            background: #6c757d;
+        }
+        .link-list a.secondary:hover {
+            background: #5a6268;
+        }
+        .note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #fff3cd;
+            border-radius: 8px;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+        .note p {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 小学语文听写助手</h1>
+
+        <ul class="link-list">
+            <li><a href="http://localhost:3001" target="_blank">🚀 点击访问开发服务器</a></li>
+            <li><a href="dist/index.html" class="secondary">📁 直接打开静态页面</a></li>
+        </ul>
+
+        <div class="note">
+            <p><strong>💡 使用提示：</strong></p>
+            <p>1. 如果第一个链接无法访问，请点击"直接打开静态页面"</p>
+            <p>2. 或者运行"启动服务器.bat"来启动本地服务器</p>
+            <p>3. 推荐使用 Chrome 或 Edge 浏览器</p>
+        </div>
+    </div>
+</body>
+</html>
